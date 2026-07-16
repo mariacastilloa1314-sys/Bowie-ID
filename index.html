@@ -500,7 +500,7 @@ Si me ves solo y confundido, avisa a mi familia 🤎
   const lightboxImg = document.getElementById('lightbox-img');
   document.querySelectorAll('.zoomable img').forEach(img=>{
     img.addEventListener('click', (e)=>{
-      if(img.closest('.hl')) e.stopPropagation();
+      if(img.closest('.hl')){ e.preventDefault(); e.stopPropagation(); }
       lightboxImg.src = img.src;
       lightbox.classList.add('open');
     });
@@ -540,21 +540,25 @@ Si me ves solo y confundido, avisa a mi familia 🤎
       const { latitude, longitude } = pos.coords;
       const mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
       try{
+        const params = new URLSearchParams({
+          _subject: 'Alguien escaneó la placa de Bowie',
+          mensaje: 'Alguien encontró a Bowie y compartió su ubicación desde la ficha web.',
+          ubicacion_mapa: mapsLink,
+          latitud: latitude,
+          longitud: longitude
+        });
         const res = await fetch('https://formsubmit.co/ajax/mariacastilloa1314@gmail.com', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify({
-            _subject: '📍 Alguien escaneó la placa de Bowie',
-            mensaje: 'Alguien encontró a Bowie y compartió su ubicación desde la ficha web.',
-            ubicacion_mapa: mapsLink,
-            latitud: latitude,
-            longitud: longitude
-          })
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+          body: params.toString()
         });
+        const data = await res.json().catch(()=>null);
+        console.log('formsubmit response:', res.status, data);
         if(res.ok){
           status.textContent = 'Listo. Le avisamos a la familia con tu ubicación. Gracias.';
-        } else { throw new Error('no ok'); }
+        } else { throw new Error('no ok: ' + res.status); }
       }catch(e){
+        console.error('Error enviando ubicación:', e);
         status.textContent = 'No se pudo enviar. Por favor escríbenos por WhatsApp.';
       }
       btn.disabled = false;
